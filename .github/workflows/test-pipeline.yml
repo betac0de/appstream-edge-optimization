@@ -1,0 +1,186 @@
+name: Edge AppStream Optimization — Test Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL for Edge to launch (kiosk URL)'
+        required: true
+        default: 'https://example.com'
+      iterations:
+        description: 'Number of harness iterations'
+        required: false
+        default: '3'
+      headless:
+        description: 'Run Edge in headless mode (required for Server Core)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  test-pipeline:
+    name: Phase 0→4 Pipeline
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print environment info
+        run: |
+          Write-Output "=== OS Info ==="
+          Get-ComputerInfo | Select-Object WindowsVersion, OsBuildNumber, OsArchitecture | Format-List
+          Write-Output "=== PowerShell ==="
+          $PSVersionTable | Format-Table
+          Write-Output "=== Docker ==="
+          docker --version 2>&1
+          docker info --format '{{.OSType}}' 2>&1
+
+      - name: Phase 0 — Preflight
+        id: preflight
+        run: |
+          $result = & "${{ github.workspace }}\scripts\00-preflight.ps1" 2>&1
+          Write-Output $result
+          $json = $result | ConvertFrom-Json
+          if (-not $json.all_passed) {
+            Write-Warning "Pre-flight checks failed. Non-Docker tests will still run."
+          }
+          echo "preflight_passed=$($json.all_passed)" >> $env:GITHUB_OUTPUT
+
+      - name: Attempt Docker Windows containers switch
+        id: docker_switch
+        continue-on-error: true
+        run: |
+          Write-Output "Attempting Docker Windows containers switch..."
+          $dockerdPath = "C:\Program Files\Docker\Docker\DockerCli.exe"
+          if (Test-Path $dockerdPath) {
+            & "$dockerdPath" -SwitchDaemon 2>&1
+            Start-Sleep -Seconds 15
+            $mode = docker info --format '{{.OSType}}' 2>&1
+            Write-Output "Docker mode: $mode"
+            echo "docker_mode=$mode" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "Docker CLI not found — skipping container phases"
+            echo "docker_mode=unavailable" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Phase 1 — Provision Container (if Docker available)
+        id: provision
+        if: steps.docker_switch.outputs.docker_mode == 'windows'
+        continue-on-error: true
+        run: |
+          $result = & "${{ github.workspace }}\scripts\01-provision-container.ps1" 2>&1
+          Write-Output $result
+          $json = $result | ConvertFrom-Json
+          echo "container_running=$($json.container_running)" >> $env:GITHUB_OUTPUT
+          echo "edge_installed=$($json.edge_installed)" >> $env:GITHUB_OUTPUT
+          echo "edge_version=$($json.edge_version)" >> $env:GITHUB_OUTPUT
+
+      - name: Phase 2 — Policy Injection (local HKCU)
+        id: inject
+        run: |
+          $result = & "${{ github.workspace }}\scripts\02-inject-policies.ps1" -TargetUrl "${{ inputs.target_url }}" 2>&1
+          Write-Output $result
+          $json = $result | ConvertFrom-Json
+          echo "keys_passed=$($json.keys_passed)" >> $env:GITHUB_OUTPUT
+          echo "keys_total=$($json.keys_total)" >> $env:GITHUB_OUTPUT
+          echo "all_keys_valid=$($json.all_keys_valid)" >> $env:GITHUB_OUTPUT
+          if (-not $json.all_keys_valid) {
+            Write-Output "=== FAILED KEYS ==="
+            $json.results | Where-Object { $_.status -ne 'PASS' } | Format-Table name, status, expected, actual -AutoSize
+            exit 1
+          }
+
+      - name: Phase 3 — Registry Validation (standalone)
+        id: validate
+        run: |
+          $result = & "${{ github.workspace }}\scripts\03-validate-registry.ps1" -TargetUrl "${{ inputs.target_url }}" 2>&1
+          Write-Output $result
+          $json = $result | ConvertFrom-Json
+          echo "all_keys_valid=$($json.all_keys_valid)" >> $env:GITHUB_OUTPUT
+          if (-not $json.all_keys_valid) {
+            Write-Output "=== VALIDATION FAILURES ==="
+            $json.results | Where-Object { $_.status -ne 'PASS' } | Format-Table name, status, expected_value, actual_value -AutoSize
+            exit 1
+          }
+
+      - name: Phase 4 — Launch Edge (headless)
+        id: launch
+        continue-on-error: true
+        run: |
+          $headlessFlag = if ('${{ inputs.headless }}' -eq 'true') { '-Headless' } else { '' }
+          $result = & "${{ github.workspace }}\scripts\04-launch-edge.ps1" -TargetUrl "${{ inputs.target_url }}" $headlessFlag 2>&1
+          Write-Output $result
+          $json = $result | ConvertFrom-Json
+          echo "edge_survived=$($json.survived)" >> $env:GITHUB_OUTPUT
+          echo "edge_pid=$($json.pid)" >> $env:GITHUB_OUTPUT
+          if (-not $json.survived) {
+            Write-Output "=== EDGE DID NOT SURVIVE 15s ==="
+            Write-Output "Stderr: $($json.stderr_snippet)"
+          }
+
+      - name: Run full harness
+        id: harness
+        if: always()
+        continue-on-error: true
+        run: |
+          $headlessArg = if ('${{ inputs.headless }}' -eq 'true') { '-Headless' } else { '' }
+          $result = & "${{ github.workspace }}\scripts\05-test-harness.ps1" `
+            -TargetUrl "${{ inputs.target_url }}" `
+            -Iterations ${{ inputs.iterations }} `
+            -StopOnFirstFailure:$true `
+            $headlessArg 2>&1
+          Write-Output $result
+          if (Test-Path "${{ github.workspace }}\test-report.json") {
+            $report = Get-Content "${{ github.workspace }}\test-report.json" -Raw | ConvertFrom-Json
+            echo "verdict=$($report.verdict)" >> $env:GITHUB_OUTPUT
+            echo "pass_rate=$($report.pass_rate)" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            test-report.json
+            logs/
+          retention-days: 30
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-logs
+          path: logs/
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        continue-on-error: true
+        run: |
+          & "${{ github.workspace }}\scripts\06-cleanup.ps1" -Full 2>&1
+
+      - name: Summary
+        if: always()
+        run: |
+          Write-Output ""
+          Write-Output "============================================"
+          Write-Output " PIPELINE SUMMARY"
+          Write-Output "============================================"
+          Write-Output "Phase 0 (Preflight):       ${{ steps.preflight.outputs.preflight_passed }}"
+          Write-Output "Phase 1 (Provisioning):    Docker mode: ${{ steps.docker_switch.outputs.docker_mode }}"
+          Write-Output "Phase 2 (Policy Inject):   ${{ steps.inject.outputs.keys_passed }}/${{ steps.inject.outputs.keys_total }} keys passed"
+          Write-Output "Phase 3 (Validate):        All valid: ${{ steps.validate.outputs.all_keys_valid }}"
+          Write-Output "Phase 4 (Edge Launch):     Survived: ${{ steps.launch.outputs.edge_survived }}"
+          Write-Output "Harness Verdict:           ${{ steps.harness.outputs.verdict }}"
+          Write-Output "Harness Pass Rate:         ${{ steps.harness.outputs.pass_rate }}"
+          Write-Output "============================================"
