@@ -134,7 +134,8 @@ foreach (`$key in `$expected.Keys) {
         `$typeMatch = `$actualType -eq `$expectedType
         `$valueMatch = `$false
         if (`$expectedType -eq "MultiString") {
-            `$valueMatch = (`$null -ne `$actualValue) -and ((Compare-Object @(`$actualValue) @(`$expectedValue)).Count -eq 0)
+            `$diff = Compare-Object @(`$actualValue) @(`$expectedValue)
+            `$valueMatch = (`$null -eq `$diff) -or (`$diff.Count -eq 0)
         } else {
             `$valueMatch = `$actualValue -eq `$expectedValue
         }
@@ -250,7 +251,8 @@ foreach ($key in $expected.Keys) {
         $typeMatch = $actualType -eq $expectedType
         $valueMatch = $false
         if ($expectedType -eq "MultiString") {
-            $valueMatch = ($null -ne $actualValue) -and ((Compare-Object @($actualValue) @($expectedValue)).Count -eq 0)
+            $diff = Compare-Object @($actualValue) @($expectedValue)
+            $valueMatch = ($null -eq $diff) -or ($diff.Count -eq 0)
         } else {
             $valueMatch = $actualValue -eq $expectedValue
         }

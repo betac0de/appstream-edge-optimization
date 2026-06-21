@@ -160,7 +160,8 @@ foreach (`$key in `$policyKeys) {
         `$actualValue = `$actual.`$(`$key.Name)
         `$match = `$false
         if (`$key.Type -eq "MultiString") {
-            `$match = (Compare-Object `$actualValue `$key.Value).Count -eq 0
+            `$diff = Compare-Object `$actualValue `$key.Value
+            `$match = (`$null -eq `$diff) -or (`$diff.Count -eq 0)
         } else {
             `$match = `$actualValue -eq `$key.Value
         }
@@ -279,7 +280,8 @@ foreach ($key in $policyKeys) {
         $actualValue = $actual.($key.Name)
         $match = $false
         if ($key.Type -eq "MultiString") {
-            $match = ($null -ne $actualValue) -and ((Compare-Object $actualValue $key.Value).Count -eq 0)
+            $diff = Compare-Object $actualValue $key.Value
+            $match = ($null -eq $diff) -or ($diff.Count -eq 0)
         } else {
             $match = $actualValue -eq $key.Value
         }
