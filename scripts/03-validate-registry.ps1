@@ -238,7 +238,7 @@ foreach ($key in $expected.Keys) {
         $expectedType = $expected[$key].Type
 
         # Determine actual type
-        if ($actualValue -is [array] -and $actualValue.Count -gt 1) {
+        if ($actualValue -is [array]) {
             $actualType = "MultiString"
         } elseif ($actualValue -is [string]) {
             $actualType = "String"
