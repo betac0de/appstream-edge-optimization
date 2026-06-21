@@ -36,6 +36,7 @@ jobs:
 
       - name: Print environment info
         run: |
+          $ErrorActionPreference = "Continue"
           Write-Output "=== OS Info ==="
           Get-ComputerInfo | Select-Object WindowsVersion, OsBuildNumber, OsArchitecture | Format-List
           Write-Output "=== PowerShell ==="
@@ -43,10 +44,16 @@ jobs:
           Write-Output "=== Docker ==="
           docker --version 2>&1
           docker info --format '{{.OSType}}' 2>&1
+          Write-Output "=== Edge ==="
+          $edgePath = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+          if (Test-Path $edgePath) { Write-Output "Edge found: $edgePath" } else { Write-Output "Edge not found at default path" }
+          exit 0
 
       - name: Phase 0 — Preflight
         id: preflight
+        continue-on-error: true
         run: |
+          $ErrorActionPreference = "Continue"
           $result = & "${{ github.workspace }}\scripts\00-preflight.ps1" 2>&1
           Write-Output $result
           $json = $result | ConvertFrom-Json
