@@ -135,8 +135,8 @@ $output = @{
     timestamp_utc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
     all_passed = $allPassed
     checks_total = $results.Count
-    checks_passed = ($results | Where-Object { $_.passed }).Count
-    checks_failed = ($results | Where-Object { -not $_.passed }).Count
+    checks_passed = @($results | Where-Object { $_.passed }).Count
+    checks_failed = @($results | Where-Object { -not $_.passed }).Count
     results = $results
     log_file = $LogFile
 }

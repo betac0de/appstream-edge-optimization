@@ -300,17 +300,17 @@ foreach ($key in $expected.Keys) {
     }
 }
 
-$allValid = ($results | Where-Object { $_.status -ne "PASS" }).Count -eq 0
+$allValid = @($results | Where-Object { $_.status -ne "PASS" }).Count -eq 0
 
 $output = @{
     timestamp_utc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
     all_keys_valid = $allValid
     keys_total = $results.Count
-    keys_passed = ($results | Where-Object { $_.status -eq "PASS" }).Count
-    keys_type_mismatch = ($results | Where-Object { $_.status -eq "TYPE_MISMATCH" }).Count
-    keys_value_mismatch = ($results | Where-Object { $_.status -eq "VALUE_MISMATCH" }).Count
-    keys_missing = ($results | Where-Object { $_.status -eq "MISSING" }).Count
-    keys_errored = ($results | Where-Object { $_.status -eq "ERROR" }).Count
+    keys_passed = @($results | Where-Object { $_.status -eq "PASS" }).Count
+    keys_type_mismatch = @($results | Where-Object { $_.status -eq "TYPE_MISMATCH" }).Count
+    keys_value_mismatch = @($results | Where-Object { $_.status -eq "VALUE_MISMATCH" }).Count
+    keys_missing = @($results | Where-Object { $_.status -eq "MISSING" }).Count
+    keys_errored = @($results | Where-Object { $_.status -eq "ERROR" }).Count
     results = $results
     log_file = $LogFile
 }
