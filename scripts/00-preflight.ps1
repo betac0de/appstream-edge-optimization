@@ -25,9 +25,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 param(
-    [string]$MsiUrl = "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/a2861c8f-b98a-4412-a162-43f1d32152a5/MicrosoftEdgeEnterpriseX64.msi",
+    [string]$MsiUrl = "",
     [int]$MinDiskGB = 20
 )
+
+# Default MSI URL if not provided (param default with long strings breaks in some shells)
+if (-not $MsiUrl) {
+    $MsiUrl = "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/a2861c8f-b98a-4412-a162-43f1d32152a5/MicrosoftEdgeEnterpriseX64.msi"
+}
 
 $LogDir = Join-Path $PSScriptRoot "..\logs"
 if (-not (Test-Path $LogDir)) { New-Item -Path $LogDir -ItemType Directory -Force | Out-Null }

@@ -26,9 +26,14 @@ $ErrorActionPreference = "Stop"
 param(
     [string]$ContainerName = "appstream-edge-test",
     [string]$ImageName = "mcr.microsoft.com/windows/servercore:ltsc2025",
-    [string]$MsiUrl = "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/a2861c8f-b98a-4412-a162-43f1d32152a5/MicrosoftEdgeEnterpriseX64.msi",
+    [string]$MsiUrl = "",
     [switch]$NoCache
 )
+
+# Default MSI URL if not provided
+if (-not $MsiUrl) {
+    $MsiUrl = "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/a2861c8f-b98a-4412-a162-43f1d32152a5/MicrosoftEdgeEnterpriseX64.msi"
+}
 
 $LogDir = Join-Path $PSScriptRoot "..\logs"
 if (-not (Test-Path $LogDir)) { New-Item -Path $LogDir -ItemType Directory -Force | Out-Null }
