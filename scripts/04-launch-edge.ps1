@@ -2,7 +2,7 @@
 .SYNOPSIS
     Launches Microsoft Edge in kiosk/inprivate mode and verifies process stability.
 .DESCRIPTION
-    Starts Edge with --inprivate --no-first-run, monitors for 15 seconds,
+    Starts Edge with --inprivate --no-first-run --no-default-browser-check, monitors for 15 seconds,
     checks if the process survived (no crash), captures stderr, and reports.
     Designed for both local host and Docker container execution.
 .PARAMETER TargetUrl
@@ -61,7 +61,7 @@ Get-Process -Name "msedge" -ErrorAction SilentlyContinue | Stop-Process -Force -
 Start-Sleep -Seconds 2
 
 # Build launch arguments
-`$args = @("--inprivate", "--no-first-run")
+`$args = @("--inprivate", "--no-first-run", "--no-default-browser-check")
 if (`$Headless) { `$args += "--headless" }
 `$args += `$TargetUrl
 
@@ -140,7 +140,7 @@ $stderrFile = Join-Path $LogDir ("edge-stderr-{0:yyyyMMdd-HHmmss}.txt" -f [DateT
 Write-Log "Stderr redirected to: $stderrFile"
 
 # Build launch arguments
-$edgeArgs = @("--inprivate", "--no-first-run")
+$edgeArgs = @("--inprivate", "--no-first-run", "--no-default-browser-check")
 if ($Headless) { $edgeArgs += "--headless" }
 $edgeArgs += $TargetUrl
 

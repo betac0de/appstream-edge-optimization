@@ -39,7 +39,12 @@ New-ItemProperty -Path $EdgePolicyPath -Name "SyncDisabled" -Value 1 -PropertyTy
 
 # 4. Launch Execution
 $PrivateUrl = "https://your-private-url-here.com"
-Start-Process -FilePath "msedge.exe" -ArgumentList "--inprivate", "--no-first-run", $PrivateUrl
+
+# Method A: Direct launch via Start-Process (recommended for AppStream session scripts)
+Start-Process -FilePath "msedge.exe" -ArgumentList "--inprivate", "--no-first-run", "--no-default-browser-check", $PrivateUrl
+
+# Method B: Alternative with explicit window style control
+# Start-Process -FilePath "msedge.exe" -ArgumentList "--inprivate --no-first-run --no-default-browser-check $PrivateUrl" -WindowStyle Maximized
 ```
 
 ## 4. Testing Execution: Windows Server 2025 Docker Container

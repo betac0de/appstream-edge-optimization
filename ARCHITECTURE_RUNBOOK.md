@@ -188,7 +188,7 @@ if ($result.all_keys_valid) { Write-Output "GATE 2: PASS" } else { throw "GATE 2
 ### Steps
 
 1. Kill any existing `msedge.exe` processes
-2. Start Edge with `--inprivate --no-first-run --headless <TargetUrl>`
+2. Start Edge with `--inprivate --no-first-run --no-default-browser-check --headless <TargetUrl>`
 3. Capture PID immediately
 4. Wait 15 seconds
 5. Check if PID still exists (`Get-Process -Id $pid -ErrorAction SilentlyContinue`)
@@ -411,7 +411,7 @@ In the AppStream Image Builder console:
 ### Step 3: Configure Edge as Catalog Application
 ```powershell
 $EdgePath = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-$Args = "--inprivate --no-first-run https://your-app.example.com"
+$Args = "--inprivate --no-first-run --no-default-browser-check https://your-app.example.com"
 # Register in AppStream Application Catalog with these parameters
 ```
 
