@@ -129,7 +129,7 @@ $results += Test-Check -Name "Network Connectivity" -Test {
 } -PassMessage "Network connectivity confirmed" `
   -FailMessage "No network connectivity to 8.8.8.8"
 
-$allPassed = ($results | Where-Object { -not $_.passed }).Count -eq 0
+$allPassed = @($results | Where-Object { -not $_.passed }).Count -eq 0
 
 $output = @{
     timestamp_utc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")

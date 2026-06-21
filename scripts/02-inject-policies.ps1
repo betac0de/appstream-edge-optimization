@@ -326,7 +326,7 @@ if ($conflicts.Count -eq 0) {
     Write-Log "No HKLM policy conflicts detected."
 }
 
-$allValid = ($results | Where-Object { $_.status -ne "PASS" -and $_.status -ne "DRYRUN" }).Count -eq 0
+$allValid = @($results | Where-Object { $_.status -ne "PASS" -and $_.status -ne "DRYRUN" }).Count -eq 0
 
 $output = @{
     timestamp_utc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")

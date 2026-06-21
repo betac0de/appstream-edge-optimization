@@ -122,12 +122,13 @@ Write-Log "StopOnFirstFailure: $StopOnFirstFailure"
 Write-Log "Headless: $Headless"
 Write-Log "============================================"
 
+$headlessArgStr = if ($Headless) { "-Headless" } else { "" }
 $phaseOrder = @(
     @{ Name = "Phase 0: Preflight";        Script = "00-preflight.ps1";         Args = "";                              ExitCode = 0 }
     @{ Name = "Phase 1: Provisioning";     Script = "01-provision-container.ps1"; Args = if ($NoCache) { "-NoCache" } else { "" }; ExitCode = 0 }
     @{ Name = "Phase 2: Policy Injection"; Script = "02-inject-policies.ps1";  Args = "-TargetUrl `"$TargetUrl`"";     ExitCode = 0 }
     @{ Name = "Phase 3: Validate Registry";Script = "03-validate-registry.ps1"; Args = "-TargetUrl `"$TargetUrl`"";     ExitCode = 0 }
-    @{ Name = "Phase 4: Launch Edge";     Script = "04-launch-edge.ps1";       Args = "-TargetUrl `"$TargetUrl`" $(if ($Headless) { "-Headless" } else { "" })"; ExitCode = 0 }
+    @{ Name = "Phase 4: Launch Edge";     Script = "04-launch-edge.ps1";       Args = "-TargetUrl `"$TargetUrl`" $headlessArgStr"; ExitCode = 0 }
 )
 
 $allIterations = @()
