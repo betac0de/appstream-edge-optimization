@@ -20,8 +20,6 @@
 #>
 
 #Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
 
 param(
     [string]$ContainerName = "appstream-edge-test",
@@ -29,6 +27,9 @@ param(
     [string]$MsiUrl = "",
     [switch]$NoCache
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
 # Default MSI URL if not provided
 if (-not $MsiUrl) {

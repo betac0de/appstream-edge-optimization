@@ -21,13 +21,14 @@
 #>
 
 #Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
 
 param(
     [string]$MsiUrl = "",
     [int]$MinDiskGB = 20
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
 # Default MSI URL if not provided (param default with long strings breaks in some shells)
 if (-not $MsiUrl) {

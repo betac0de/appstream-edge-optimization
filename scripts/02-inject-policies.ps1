@@ -19,8 +19,6 @@
 #>
 
 #Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
 
 param(
     [Parameter(Mandatory=$true)]
@@ -28,6 +26,9 @@ param(
     [string]$ContainerName = "",
     [switch]$DryRun
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
 $LogDir = Join-Path $PSScriptRoot "..\logs"
 if (-not (Test-Path $LogDir)) { New-Item -Path $LogDir -ItemType Directory -Force | Out-Null }

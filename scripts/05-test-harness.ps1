@@ -29,8 +29,6 @@
 #>
 
 #Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
 
 param(
     [Parameter(Mandatory=$true)]
@@ -40,6 +38,9 @@ param(
     [switch]$Headless,
     [switch]$NoCache
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
 $ScriptDir = $PSScriptRoot
 $LogDir = Join-Path $ScriptDir "..\logs"

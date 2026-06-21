@@ -18,14 +18,15 @@
 #>
 
 #Requires -Version 5.1
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Continue"
 
 param(
     [string]$ContainerName = "appstream-edge-test",
     [switch]$Full,
     [string]$ImageName = "mcr.microsoft.com/windows/servercore:ltsc2025"
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Continue"
 
 $LogDir = Join-Path $PSScriptRoot "..\logs"
 if (-not (Test-Path $LogDir)) { New-Item -Path $LogDir -ItemType Directory -Force | Out-Null }
